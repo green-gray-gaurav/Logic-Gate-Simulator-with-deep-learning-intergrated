@@ -1,2 +1,1 @@
-pygame.quit() 
-            sys.exit()
+me.display.update()

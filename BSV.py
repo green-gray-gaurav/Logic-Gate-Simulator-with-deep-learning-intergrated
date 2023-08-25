@@ -594,7 +594,8 @@ class gateGuiManager():
             pass
         
         #toggling the state of the selected gate output bit // only for terminal box
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button ==3 and  pygame.key.get_pressed()[pygame.K_LCTRL]:
+        shortcut = event.type == pygame.KEYDOWN and event.key == pygame.K_RALT
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button ==3 and  pygame.key.get_pressed()[pygame.K_LCTRL] or shortcut:
             if self.recent_selected:
 
                 Bitstatus = self.gatemanager.getTerminalOutput(self.recent_selected)
@@ -606,15 +607,12 @@ class gateGuiManager():
                 self.gateGUI_dic[self.recent_selected].getGateGui()
                 self.gateGUI_dic[self.recent_selected].loadWindow(self.window)
         
+
         #here is the clock runnung prop
         if event.type == pygame.MOUSEBUTTONDOWN and event.button ==3 and  pygame.key.get_pressed()[pygame.K_LCTRL]:
             if self.recent_selected and self.gatemanager.gate_dic[self.recent_selected].gateLabel == "CLK":
                 self.operationBuffer.append(['SIM' , 20 , self.recent_selected])
             pass
-
-
-        
-
    
         #here isthe event of window ressing 
         if event.type == pygame.VIDEORESIZE:
@@ -623,6 +621,11 @@ class gateGuiManager():
             #toggle buttons
             self.info_toggler.setPos([128 , self.window.get_height() -self.info_toggler.BoxWidth  -32])
 
+
+
+        #vision key short
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_RSHIFT:
+            self.operationBuffer.append(["SIM"])
 
         
 

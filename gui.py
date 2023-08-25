@@ -510,6 +510,10 @@ class ImageButton():
 
         self.refresh()
         pass
+    def set_image(self , path):
+        self.imagePath = path
+        self.refresh()
+
     def setPos(self ,pos):
         self.x , self.y = pos
         self.refresh()
@@ -757,6 +761,58 @@ class LabelList():
 
     #     return lineHeight
 
+class LoadingGui():
+    # 100,100,arcSize=90,size=100 , incr=50 , borderW=5
+    def __init__(self , x , y , color = (0,20,200),  arcSize = 90 , size = 100 , borderW = 5 , incr = 30 , clk = 0.1):
+        from util_functions import Timer
+        import math
+        self.__math = math
+
+        self.x = x
+        self.y = y
+        self.loadingRect = None
+        self.size = size
+        self.start = 0
+        self.stop = arcSize
+        self.incr = incr
+        
+        self.color = color
+        self.borderW = borderW
+        self.window = None
+
+        self.delta = 0
+
+        self.is_loading = False
+
+        self.timer = Timer(clk , self.__process , True)
+        pass
+    def setPos(self , pos):
+        self.x , self.y   = pos
+    def loadWindow(self , window):
+        self.window = window
+        pass
+    def __process(self):
+        self.delta += self.incr
+        pass
+
+    def startLoading(self):
+        self.timer.start()
+        self.is_loading = True
+        pass
+    def stopLoading(self):
+        self.timer.pause()
+        self.is_loading= False
+        pass
+    def againStartLoading(self):
+        self.timer.startAgain()
+        self.is_loading = True
+
+    def renderWidget(self):
+        if self.is_loading:
+            self.loadingRect = pygame.draw.arc(self.window , self.color , pygame.Rect(self.x - self.size/2 , self.y -self.size/2 , self.size ,self.size ) , self.__math.radians(self.start + self.delta) , self.__math.radians(self.stop + self.delta) , self.borderW )
+        
+        pass
+    
 
 
     

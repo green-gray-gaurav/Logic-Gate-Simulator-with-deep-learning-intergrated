@@ -13,9 +13,8 @@ class quickBar():
         #setting 
         self.modeBit = [1,1]
 
-
         #internal state
-
+        
         self.buttonArray = []
         self.backgroundRect = None
         self.gap = 30
@@ -46,6 +45,13 @@ class quickBar():
             self.pos = pygame.mouse.get_pos()
             self.makeButtons()
             self.show = True
+
+        #other way around
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_RCTRL  and self.modeBit[0]:
+            self.pos = pygame.mouse.get_pos()
+            self.makeButtons()
+            self.show = True
+            
     
         if self.show :
             for button in self.buttonArray:

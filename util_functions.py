@@ -23,25 +23,54 @@ def naiveSuggestion(word:str , keys):
     return suggestions
 
 
-def dicToStruct(dic):
+def dicToStruct(dic , name):
 
     class struct():
         def __init__(self , dic) -> None:
+            #ineranl parms
+            self.thisName = name
+            self.this = dic
+            self.type = "dict"
+
+
             for k , v in dic.items():
                 if type(k) is int:
-                    self.__dict__[f"index_{k}"] = v
+                    self.__dict__[f"____{k}"] = v
                 else:
                     self.__dict__[k] = v
     return struct(dic)
-        
 
-def listToStruct(list):
+def dicRef(key:str):
+    if key.count('_') == 4:
+        return int(key.strip('_'))
+    else:
+        return key
+    
+
+
+def listToStruct(list , name):
 
     class struct():
         def __init__(self , dic) -> None:
+             #ineranl parms
+            self.thisName = name
+            self.this = dic
+            self.type = 'list'
+
             for index , v in enumerate(list):
                 self.__dict__[f"index_{index}"] = v
     return struct(list)
+
+def parser(tp , data):
+    parsers = {'str': str(data) , 'int' : int(data) , 'float' : float(data) , 'bool' : bool(int(data))}
+
+    try:
+        return parsers[tp]
+    except:
+        return None
+
+
+
 
 class Timer():
     def __init__(self , timerValue , trigger , onloop = False) -> None:
@@ -75,6 +104,11 @@ class Timer():
 
     def reset(self):
         self.timer = 0
+
+    def startAgain(self):
+        self.resume()
+        self.thread = threading.Thread(target=self.refreshClock)
+        self.start()
 
     def refreshClock(self):
         if self.thread == None : return

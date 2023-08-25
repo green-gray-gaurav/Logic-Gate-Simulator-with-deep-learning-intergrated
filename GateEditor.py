@@ -1,11 +1,54 @@
 import pygame
 from pygame.locals import * #constants
 import sys 
-from singltions.file_sl import basicSaving , saverLoader
-from gui import InputFieldPro , LabelList , ImageButton
+from singltions.file_sl import basicSaving , saverLoader 
+from gui import InputFieldPro , LabelList , ImageButton , LoadingGui
 from shells.shells_base import shell
+from singltions.vision_pointer import vision_pointer
 import webbrowser
 from util_functions import Timer
+import threading
+
+#vision 
+from gesture_recognizer import JustureReq
+
+#gesture control
+gesture = JustureReq(False)
+
+#active event
+_MY_ACTIVE_EVENT_ = pygame.USEREVENT+1
+active_event = pygame.event.Event(_MY_ACTIVE_EVENT_)
+
+#handle of the gesture thread and flag to break the while loop within
+handle = None
+flag = None
+
+#vision button
+vision_but = None
+vision_lg = None
+
+#vision toggler
+
+def toggleVision():
+    global handle , flag , vision_but
+
+    if handle and handle.is_alive():
+        flag.set()
+        handle.join()
+        vision_but.set_image("gateRes/vision_inactive_icon.png")
+
+    else:
+        #stop flag 
+        flag = threading.Event()
+        handle = threading.Thread(target=gesture.main , args=[flag , active_event])
+        handle.start()
+        # vision_but.set_image("gateRes/vision_pending_icon.png")
+        vision_lg.againStartLoading()
+
+        
+
+
+
 
 #web
 COMMUNITY_LINK ="https://sample-app-71dda.web.app"
@@ -59,6 +102,18 @@ sl.loadOnBoard(manager)
 com_but = ImageButton("gateRes/feedback_icon.png" , 16 , WINDOW_HEIGHT-64 , 32 , lambda : webbrowser.open_new_tab(COMMUNITY_LINK))
 com_but.loadWindow(window)
 
+
+
+#visin
+vision_lg = LoadingGui(x = 64 + 32/2 , y = WINDOW_HEIGHT-128 + 32/2 , size=32)
+vision_but = ImageButton("gateRes/vision_inactive_icon.png" , 64 , WINDOW_HEIGHT-128  , 32 , toggleVision)
+vision_but.loadWindow(window)
+vision_lg.loadWindow(window)
+
+#vision pointer
+vp = vision_pointer()
+vp.loadWindow(window)
+
 #fgrid maker
 def gridMaker(center , cellSize , color , limits):
     lx  , ly = limits
@@ -94,7 +149,10 @@ shl.setRefObj('gui' , guimanager)
 
 
 
+
+
 while True:
+    
     
 
     #saving the stsus of the mamger object
@@ -107,12 +165,12 @@ while True:
 
     gridMaker((WINDOW_WIDTH/2  + origin_shift[0] , WINDOW_HEIGHT/2 + origin_shift[1]) , cellsize , (100,100,100) , [WINDOW_WIDTH , WINDOW_HEIGHT])
 
-
+    
     for event in pygame.event.get(): #event loop
         if event.type == pygame.QUIT: 
             # bs.saveObj("saved/test.pkl" , manager)
-            
-            pygame.quit() 
+            handle.join()
+            pygame.quit()
             sys.exit()
         
         if pygame.key.get_pressed()[pygame.K_r]:
@@ -127,6 +185,9 @@ while True:
 
             shl_but.setPos((16 , WINDOW_HEIGHT-128 ))
             com_but.setPos(( 16 , WINDOW_HEIGHT-64))
+
+            vision_but.setPos(( 64 , WINDOW_HEIGHT-128))
+            vision_lg.setPos((64 + 32/2  , WINDOW_HEIGHT-128 + 32/2 ))
             pass
 
         #here we are scalling the cellesize
@@ -146,22 +207,37 @@ while True:
             origin_shift = [ mx - WINDOW_WIDTH/2 , my - WINDOW_HEIGHT/2]
             guimanager.setOrigins(origin_shift , globalOrigin = [WINDOW_WIDTH/2 , WINDOW_HEIGHT/2])
             pass 
+
+        #event for vision loading
+        if event.type == _MY_ACTIVE_EVENT_: #vision loaded
+            vision_lg.stopLoading()
+            vision_but.set_image("gateRes/vision_active_icon.png")
        
         guimanager.renderevent(event)
         sl.renderEvent(event)
+
         com_but.eventRender(event)
-        
+        vision_but.eventRender(event)
+
         shl.eventRender(event)
         shl_but.eventRender(event)
+
+        vp.eventRenderer(event)
        
         
     shl.renderWindow()
     shl_but.renderWidget()
     guimanager.renderGates()
     sl.renderWindow()
-    com_but.renderWidget()
-   
 
+    com_but.renderWidget()
+    vision_but.renderWidget()
+    vision_lg.renderWidget()
+
+    if handle and handle.is_alive():
+        vp.follow(pygame.mouse.get_pos())
+        vp.renderWidget()
+    
     pygame.display.update()
     clock.tick(FRAMES_PER_SECOND) 
 

@@ -1,5 +1,5 @@
 from gui import InputFieldPro , LabelList , TextMesh
-from util_functions import suggestions , naiveSuggestion , dicToStruct , listToStruct
+from util_functions import suggestions , naiveSuggestion , dicToStruct , listToStruct , parser , dicRef
 import pygame
 
 class shell():
@@ -18,7 +18,7 @@ class shell():
         self.referObjects = {}
         self.isactive = False
 
-        self.commands = ['get' , 'set' , 'help' , "clr"]
+        self.commands = ['get' , 'set' , 'add' , "clr" , "rem" , "type"]
 
         self.recentCommands = ""
         pass
@@ -116,6 +116,7 @@ class shell():
         ERRORCODE2 = "INVALID COMMAND"
         ERRORCODE3 = "INVAILD ATRRIBUTE"
         ERRORCODE4 = "PRIMITIVE SET VALID ONLY [int , str]"
+        ERRORCODE5 = "TYPE ERROR <str , int , float..>"
 
         EMPTY_RES =  ["" , None , None]
 
@@ -132,12 +133,12 @@ class shell():
                         return [str(obj) ,  SUCCESS , NORMSIZE]
                     
                     elif type(obj) is list:
-                        self.setRefObj(data[1] , listToStruct(obj))
+                        self.setRefObj(data[1] , listToStruct(obj , data[1]))
                         return EMPTY_RES
                         pass
 
                     elif type(obj)  is  dict:
-                        self.setRefObj(data[1] , dicToStruct(obj))
+                        self.setRefObj(data[1] , dicToStruct(obj , data[1]))
                         return EMPTY_RES
                         pass
                     else:
@@ -154,11 +155,10 @@ class shell():
             if (data[0] in self.referObjects.keys()):
                 try:
 
-                    obj = getattr(self.referObjects[data[0]] , data[1])
+                    obj = getattr( self.referObjects[data[0]] , data[1] )
                     if type(obj) is  int or type(obj) is str:
-
-                        setattr(self.referObjects[data[0]] , data[1] , data[2])
-                        return [f"{data[0]} set to {data[2]}" , SUCCESS , NORMSIZE ]
+                        setattr( self.referObjects[data[0]] , data[1] , data[2] )
+                        return [f"{data[0]} set to {data[2]}" , SUCCESS , NORMSIZE]
                     
                     elif obj == None:
                         return ["UNABLE TO DECIDE THE TYPE" , CAUTION , MEDSIZE ]
@@ -167,6 +167,74 @@ class shell():
                 except:
 
                     return [ERRORCODE3 , FAIL , BIGSIZE]
+            else:
+                return [ERRROCODE1 , FAIL , BIGSIZE]
+
+            pass
+
+        if(fxn=='add' and len(tokens) == 4):
+
+            if (data[0] in self.referObjects.keys()):
+                obj = self.referObjects[data[0]]
+
+                if("thisName" in dict(vars(obj)).keys()):
+                    print("yes")
+                    objname = obj.thisName
+                    if(obj.type == 'list'):
+                        print("yeah")
+                        value = parser(data[1] , data[2])
+                        if value:
+                            obj.this.append(value)
+                            del self.referObjects[objname]
+                            self.referObjects[objname] = listToStruct(obj.this , objname)
+                            return [f"{objname} --> {obj.this} " , SUCCESS , MEDSIZE] 
+                        else:
+                            return [ERRORCODE5 , FAIL , BIGSIZE]
+
+                else:
+
+                    return [ERRROCODE1 , FAIL , BIGSIZE]
+            else:
+                return [ERRROCODE1 , FAIL , BIGSIZE]
+
+            pass
+
+        if(fxn=='rem' and len(tokens) in [3] ):
+
+            if (data[0] in self.referObjects.keys()):
+                obj = self.referObjects[data[0]]
+
+                if("thisName" in dict(vars(obj)).keys()):
+                    print("yes")
+                    objname = obj.thisName
+                    if(obj.type == 'list'):
+                        print("yeah")
+                        try:
+                            obj.this.pop(int(data[1]))
+                            del self.referObjects[objname]
+                            self.referObjects[objname] = listToStruct(obj.this , objname)
+                            return [f"{objname} --> {obj.this} " , SUCCESS , MEDSIZE] 
+                        except:
+                            return ["INVALID INDEX" , FAIL , BIGSIZE]
+                    
+                    if(obj.type == 'dict'):
+                        print("yeah")
+                        try:
+                            del obj.this[dicRef(data[1])]
+                            del self.referObjects[objname]
+                            self.referObjects[objname] = dicToStruct(obj.this , objname)
+                            return [f"{objname} --> {obj.this} " , SUCCESS , MEDSIZE] 
+                        
+                        except:
+
+                            return ["INVALID INDEX" , FAIL , BIGSIZE]    
+                
+                
+                
+                
+                else:
+
+                    return [ERRROCODE1 , FAIL , BIGSIZE]
             else:
                 return [ERRROCODE1 , FAIL , BIGSIZE]
 
