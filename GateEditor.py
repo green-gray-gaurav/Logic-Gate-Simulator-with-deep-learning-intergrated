@@ -1,3 +1,7 @@
+import ctypes
+myappid = 'mycompany.myproduct.subproduct.version' # arbitrary string
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
 import pygame
 from pygame.locals import * #constants
 import sys 
@@ -10,10 +14,10 @@ from util_functions import Timer
 import threading
 
 #vision 
-from gesture_recognizer import JustureReq
+from gesture_recognizer_changed import JestureRec
 
 #gesture control
-gesture = JustureReq(False)
+gesture = JestureRec(False)
 
 #active event
 _MY_ACTIVE_EVENT_ = pygame.USEREVENT+1
@@ -26,16 +30,17 @@ flag = None
 #vision button
 vision_but = None
 vision_lg = None
+is_on_vision = False
 
 #vision toggler
 
 def toggleVision():
-    global handle , flag , vision_but
-
+    global handle , flag , vision_but , is_on_vision
     if handle and handle.is_alive():
         flag.set()
         handle.join()
         vision_but.set_image("gateRes/vision_inactive_icon.png")
+        is_on_vision = False
 
     else:
         #stop flag 
@@ -44,11 +49,7 @@ def toggleVision():
         handle.start()
         # vision_but.set_image("gateRes/vision_pending_icon.png")
         vision_lg.againStartLoading()
-
-        
-
-
-
+        is_on_vision = True
 
 #web
 COMMUNITY_LINK ="https://sample-app-71dda.web.app"
@@ -102,10 +103,8 @@ sl.loadOnBoard(manager)
 com_but = ImageButton("gateRes/feedback_icon.png" , 16 , WINDOW_HEIGHT-64 , 32 , lambda : webbrowser.open_new_tab(COMMUNITY_LINK))
 com_but.loadWindow(window)
 
-
-
 #visin
-vision_lg = LoadingGui(x = 64 + 32/2 , y = WINDOW_HEIGHT-128 + 32/2 , size=32)
+vision_lg = LoadingGui(x = 64 + 32/2 , y = WINDOW_HEIGHT-128 + 32/2 , size=50 , color=(200 , 0 , 0) , clk=0.02 , borderW=5  , arcSize=300)
 vision_but = ImageButton("gateRes/vision_inactive_icon.png" , 64 , WINDOW_HEIGHT-128  , 32 , toggleVision)
 vision_but.loadWindow(window)
 vision_lg.loadWindow(window)
@@ -140,7 +139,15 @@ def apply_transform(posvec , trs):
 #heres is teh shell
 shl = shell(0 ,WINDOW_HEIGHT/3.7 , (200,50) , (200,300))
 shl.loadWindow(window)
-shl_but = ImageButton("gateRes/shell_icon.png" , 16 , WINDOW_HEIGHT-128  , 32 , shl.toggleActivity)
+shl_lg = LoadingGui(x = 16 + 32/2 , y = WINDOW_HEIGHT-128 + 32/2 , size=40 , color=(0,0,0) , clk=0.02 , borderW=5  , arcSize=290)
+shl_lg.loadWindow(window)
+
+def toggleShell():
+    shl.toggleActivity()
+    shl_lg.againStartLoading()
+    Timer(0.5 , shl_lg.stopLoading).start()
+
+shl_but = ImageButton("gateRes/shell_icon.png" , 16 , WINDOW_HEIGHT-128  , 32 , toggleShell)
 shl_but.loadWindow(window)
 
 #get the obj refernce to shell
@@ -168,8 +175,12 @@ while True:
     
     for event in pygame.event.get(): #event loop
         if event.type == pygame.QUIT: 
+
             # bs.saveObj("saved/test.pkl" , manager)
-            handle.join()
+
+            if is_on_vision: toggleVision()
+            
+            
             pygame.quit()
             sys.exit()
         
@@ -188,6 +199,7 @@ while True:
 
             vision_but.setPos(( 64 , WINDOW_HEIGHT-128))
             vision_lg.setPos((64 + 32/2  , WINDOW_HEIGHT-128 + 32/2 ))
+            shl_lg.setPos((16 + 32/2 , WINDOW_HEIGHT-128 + 32/2))
             pass
 
         #here we are scalling the cellesize
@@ -229,6 +241,7 @@ while True:
     shl_but.renderWidget()
     guimanager.renderGates()
     sl.renderWindow()
+    shl_lg.renderWidget()
 
     com_but.renderWidget()
     vision_but.renderWidget()
